@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行銷課簡報 - 版本選擇</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #00d9ff, #00ff88);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 1.1rem;
+    }
+
+    .latest-badge {
+      display: inline-block;
+      background: #00ff88;
+      color: #1a1a2e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .versions {
+      display: grid;
+      gap: 20px;
+    }
+
+    .version-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px;
+      transition: all 0.3s ease;
+    }
+
+    .version-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #00d9ff;
+      transform: translateY(-4px);
+    }
+
+    .version-card.latest {
+      border-color: #00ff88;
+      background: rgba(0, 255, 136, 0.1);
+    }
+
+    .version-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .version-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .version-date {
+      color: #888;
+      font-size: 0.9rem;
+    }
+
+    .version-description {
+      color: #aaa;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .version-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #00d9ff, #00ff88);
+      color: #1a1a2e;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+
+    .error {
+      text-align: center;
+      padding: 40px;
+      color: #ff6b6b;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: #00d9ff;
+      text-decoration: none;
+    }
+
+    .quick-access {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(0, 217, 255, 0.1);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .quick-access p {
+      margin-bottom: 15px;
+      color: #00d9ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>體察人心，善用科技</h1>
+      <p class="subtitle">綠色科技創業的行銷實戰課 - 版本選擇</p>
+    </header>
+
+    <div class="quick-access" id="quick-access">
+      <p>快速進入最新版本</p>
+      <a href="#" id="latest-btn" class="btn btn-primary">進入最新簡報</a>
+    </div>
+
+    <div class="versions" id="versions-list">
+      <div class="loading">載入版本中...</div>
+    </div>
+
+    <footer>
+      <p>綠亦有限公司 | <a href="https://andgreen.vzy.io" target="_blank">andgreen.vzy.io</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // 從 versions.json 載入版本資料
+    async function loadVersions() {
+      try {
+        const response = await fetch('./versions.json');
+        if (!response.ok) throw new Error('無法載入版本資料');
+        return await response.json();
+      } catch (error) {
+        console.error('載入版本失敗:', error);
+        return null;
+      }
+    }
+
+    // 排序版本（最新的排在最前面）
+    function sortVersions(versions) {
+      return versions.sort((a, b) => {
+        // 先按日期排序（新的在前）
+        const dateCompare = new Date(b.date) - new Date(a.date);
+        if (dateCompare !== 0) return dateCompare;
+
+        // 日期相同則按版本號排序（v2 > v1）
+        const versionA = parseInt(a.id.replace('v', '')) || 0;
+        const versionB = parseInt(b.id.replace('v', '')) || 0;
+        return versionB - versionA;
+      });
+    }
+
+    // 取得最新版本
+    function getLatestVersion(versions) {
+      const sorted = sortVersions([...versions]);
+      return sorted[0];
+    }
+
+    // 渲染版本卡片
+    function renderVersions(data) {
+      const container = document.getElementById('versions-list');
+      const latestBtn = document.getElementById('latest-btn');
+
+      if (!data || !data.versions || data.versions.length === 0) {
+        container.innerHTML = '<div class="error">沒有找到任何版本</div>';
+        return;
+      }
+
+      // 排序版本（最新的在前）
+      const sortedVersions = sortVersions([...data.versions]);
+      const latestVersion = sortedVersions[0];
+
+      // 設定快速進入按鈕
+      latestBtn.href = `./${latestVersion.folder}/`;
+      latestBtn.textContent = `進入 ${latestVersion.name}`;
+
+      // 清空容器
+      container.innerHTML = '';
+
+      // 渲染每個版本
+      sortedVersions.forEach((version, index) => {
+        const isLatest = index === 0;
+        const card = document.createElement('div');
+        card.className = `version-card ${isLatest ? 'latest' : ''}`;
+
+        card.innerHTML = `
+          <div class="version-header">
+            <span class="version-name">
+              ${version.name}
+              ${isLatest ? '<span class="latest-badge">最新版本</span>' : ''}
+            </span>
+            <span class="version-date">${version.date}</span>
+          </div>
+          <p class="version-description">${version.description}</p>
+          <div class="version-actions">
+            <a href="./${version.folder}/" class="btn btn-primary">查看簡報</a>
+            <a href="./${version.folder}/" target="_blank" class="btn btn-secondary">新視窗開啟</a>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // 初始化
+    async function init() {
+      const data = await loadVersions();
+      renderVersions(data);
+    }
+
+    init();
+  </script>
+</body>
+</html>
